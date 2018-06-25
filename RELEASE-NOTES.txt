@@ -1,0 +1,72 @@
+                        Rocky Commons Package
+                            
+                           Release Notes
+
+
+INTRODUCTION:
+
+This document contains the release notes for the Rocky Common library.
+Rocky Common is a set of utility functions and reusable components that should be of use in any Java environment.
+
+*** Version 0.3.1
+- Add entity "Result" to present the result of ajax submit.
+- Add utility to unzip file.
+
+*** Version 0.3.0
+- Convert project to Spring utility
+*** Version 0.2.8
+- Fixbug some bugs
+*** Version 0.2.7
+- Fixbug: CommonUtil.formatPattern(String strTemplate, Map<String, Object> mapValue)
+  In case the value contain backslash \\
+
+*** Version 0.2.6
+- Add PoiUtil: Remove sheet from Excel
+
+*** Version 0.2.5
+- Bug fixing
+
+*** Version 0.2.4
+- Bug fixing
+- Update BeanUtil: support load properties to entity
+- Update PoiUtil.setContent by address
+*** Version 0.2.3
+- Bug fixing
+
+*** Version 0.2.2
+- PoiUtil: setContent supports SXSSFSheet
+
+*** Version 0.2.1
+- PoiUtil: setContent by Sheet for Excel 2007
+- CommonUtil: Parse value by Pattern
+
+*** Version 0.2.0
+- Comment redundant codes in PoiUtil.getValue(Cell)
+
+*** Version 0.1.9
+- Update HSSFCell.setContent to support Excel 2007
+- Fix bugs
+
+*** Version 0.1.8
+- Add FileUtil class
+
+*** Version 0.1.7
+- 0.1.7.2: PoiUtil: Support Excel 2007
+
+*** Version 0.1.7
+- Common.loadResource() supports path of file in Linux: //root/folder/file
+
+*** Version 0.1.5
+- Add class EvalMathString to allow evaluate the simple string Math
+*** Version 0.5
+- Fixed bug: URL Pattern of MSSQL
+*** Version 0.3
+- Add sample of Excel manipulation
+
+*** Version 0.2
+- Removed (Change to "@Deprecated") class Util.java
+- Change methods NNandNE in CommonUtil into isNNNE.
+*** Version 0.1
+
+Le Ngoc Thach
+ThachLN@gmail.com
