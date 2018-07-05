@@ -230,7 +230,7 @@ public class BeanUtil {
         
         Object strValue = null;
         Object objvalue;
-        String dateFormat = null;
+        String dateFormat;
         
         if (data == null) {
             listData = null;
@@ -281,6 +281,7 @@ public class BeanUtil {
                         // Set data for rowData
                         idxHeader = 0;
                         for (String header : headers) {
+                            dateFormat = null;
                             // Check hear is json or not
                             if (header.startsWith("{")) {
                                 // Parse json
@@ -306,7 +307,11 @@ public class BeanUtil {
                                 //
                                 
                                 LOG.debug("value=" + objvalue);
-                                setMethod.invoke(rowOutputData, objvalue);
+                                try {
+                                    setMethod.invoke(rowOutputData, objvalue);
+                                } catch (IllegalArgumentException iaEx) {
+                                    LOG.warn("Could not call method " + setMethod.getName() + " for " + objvalue, iaEx);
+                                }
                                 
                                 // Update more options
                                 // 1. Invoke method author
@@ -393,7 +398,12 @@ public class BeanUtil {
                     return value.toString();
                 } else if (Date.class.getName().equals(typeName)) {
                     // Date data
-                    return CommonUtil.parse(value.toString(), format);
+                    
+                    Date date = CommonUtil.parse(value.toString(), format);
+                    
+                    LOG.debug("Parse date '" + value.toString() + "' with pattern '" + format + "' =" + date);
+
+                    return date;
                 } else {
                     // Create new instance of param
                     
