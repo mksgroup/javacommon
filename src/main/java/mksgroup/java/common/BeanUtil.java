@@ -6,6 +6,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -16,6 +17,8 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.json.BasicJsonParser;
+import org.springframework.boot.json.JsonParser;
 
 public class BeanUtil {
     final static Logger LOG = LoggerFactory.getLogger(BeanUtil.class);
@@ -64,18 +67,24 @@ public class BeanUtil {
         return readMethodMap;
     }
 
-    public static boolean updateProperty(Object obj, String property, String value) {
+    public static Object updateProperty(Object obj, String property, String value) {
         try {
             String setMethodName = "set" + (property.substring(0, 1).toUpperCase()) + property.substring(1);
+            
+            LOG.debug("updateProperty:obj=" + obj + ";property=" + property + ";value=" + value + ";setMethod=" + setMethodName);
+            
             Method setMethod = obj.getClass().getMethod(setMethodName, String.class);
+            
+            
             setMethod.invoke(obj, value);
+            
+            
 
         } catch (Exception ex) {
-            LOG.warn("Dynamic invoke setter for '" + property, ex);
-            return false;
+            LOG.warn("Dynamic invoke setter for '" + property + "'", ex);
         }
 
-        return true;
+        return obj;
     }
 
     public static boolean updateProperty(Object obj, String property, Object objValue) {
@@ -219,6 +228,10 @@ public class BeanUtil {
     public static List<?> getDataList(List data, String[] headers, Class objectType, boolean skipEmptyRow, String...options) {
         List<Object> listData = null;
         
+        Object strValue = null;
+        Object objvalue;
+        String dateFormat = null;
+        
         if (data == null) {
             listData = null;
         } else {
@@ -247,7 +260,7 @@ public class BeanUtil {
                 listData = new ArrayList<Object>(data.size());
                 Object rowOutputData;
                 Method setMethod;
-                Object value;
+                
                 int idxHeader;
                 Object[] rowInputObj = null;
                 for (Object rowInputObjData : data) {
@@ -268,20 +281,32 @@ public class BeanUtil {
                         // Set data for rowData
                         idxHeader = 0;
                         for (String header : headers) {
+                            // Check hear is json or not
+                            if (header.startsWith("{")) {
+                                // Parse json
+                                JsonParser jsonParser = new BasicJsonParser();
+                                Map<String, Object> jsonMap = jsonParser.parseMap(header);
+                                header = (String) jsonMap.get("name");
+                                dateFormat = (String) jsonMap.get("format");
+                            }
+
                             // Lookup header from map table
                             if (mapSetMethod.containsKey(header)) {
                                 // Call method setter to set data
                                 // Way 1: cellValue = AppUtil.readProperty(obj, memberData);
                                 
                                 setMethod = mapSetMethod.get(header);
+                                
+                                LOG.debug(String.format("Method of header '%s' is '%s'", header, (setMethod != null) ? setMethod.getName() : null));
                                
-                                value = rowInputObj[idxHeader];
+                                strValue = rowInputObj[idxHeader];
                                 
                                 // Determine type of argument of the setter method
-                                value = convertDataType(setMethod, value);
+                                objvalue = convertDataType(header, setMethod, strValue, dateFormat);
                                 //
-
-                                setMethod.invoke(rowOutputData, value);
+                                
+                                LOG.debug("value=" + objvalue);
+                                setMethod.invoke(rowOutputData, objvalue);
                                 
                                 // Update more options
                                 // 1. Invoke method author
@@ -312,7 +337,7 @@ public class BeanUtil {
                     }
                 }
             } catch (Exception ex) {
-                LOG.warn("Could not parse the data.", ex);
+                LOG.warn(String.format("Could not parse the data with value = '%s'", strValue), ex);
             }
             
         }
@@ -322,24 +347,41 @@ public class BeanUtil {
 
     /**
      * Analysis type of parameter of the method.
+     * @param propertyName name of properter.
      * @param setMethod method with only 1 parameter. Ex setId(int id).
      * @param value generic object
+     * @param format for Date data
      * @return specified object matches with type of the parameter of the method.
      */
-    private static Object convertDataType(Method setMethod, Object value) {
+    private static Object convertDataType(String propertyName, Method setMethod, Object value, String format) {
+        
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("convertDataType:setMethod=" + setMethod.getName() + ";value=" + value);
+        }
+
         String typeName = null;
-        Class<?>[] arrParamTypes = null;
+        Type[] arrParamTypes = null;
 
         if (value == null) {
             return null;
         }
         try {
-//            arrParamTypes = setMethod.getGenericParameterTypes();
-            arrParamTypes =setMethod.getParameterTypes();
+            arrParamTypes = setMethod.getGenericParameterTypes();
+//            arrParamTypes = setMethod.getParameterTypes();
             
+            // Debug
+            for (Type paramClass : arrParamTypes) {
+                LOG.debug(String.format("Param: '%s'", paramClass.getClass() + ";getTypeName=" + paramClass.getTypeName()));
+            }
+
+            for (Class paramClass : setMethod.getParameterTypes()) {
+                LOG.debug("Param getParameterTypes: " + paramClass.getClass());
+            }
+            
+            // Support the setter with one parameter.
             if ((arrParamTypes != null) && (arrParamTypes.length > 0))  {
                 // Get the first parameter type
-                typeName = arrParamTypes[0].getName();
+                typeName = arrParamTypes[0].getTypeName();
 
                 if (Integer.class.getName().equals(typeName)) {
                     return (value != null && !value.toString().isEmpty()) ? Integer.valueOf(value.toString()) : null;                    
@@ -349,13 +391,25 @@ public class BeanUtil {
                     return (value != null && !value.toString().isEmpty()) ? Double.valueOf(value.toString()) : null;
                 } else if (String.class.getName().equals(typeName)) {
                     return value.toString();
+                } else if (Date.class.getName().equals(typeName)) {
+                    // Date data
+                    return CommonUtil.parse(value.toString(), format);
                 } else {
-                    return value;
+                    // Create new instance of param
+                    
+                    Object instanceValue = Class.forName(typeName).newInstance();
+                    instanceValue = BeanUtil.updateProperty(instanceValue, propertyName, value.toString());
+
+                    return instanceValue;
                 }
             }
-        } catch(Throwable th) {
-            LOG.error(String.format("Could not parse data(method name, param type, paramlist, class, value class, value): '%s', '%s', '%s', '%s', '%s'", setMethod.getName(), typeName, arrParamTypes, value.getClass(), value.getClass(), value.toString()), th);
-            throw th;
+        } catch (Throwable th) {
+            LOG.error(String.format("Could not parse data(method name, param type, paramlist, class, value class, value.toString): '%s', '%s', '%s', '%s', '%s'", setMethod.getName(), typeName, arrParamTypes, value, value.getClass(), value.toString()), th);
+            try {
+                throw th;
+            } catch (Throwable ex) {
+                LOG.error("Could not throw exception", ex);
+            }
         }
 
         return null;
