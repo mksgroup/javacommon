@@ -40,7 +40,15 @@ public class BeanUtil {
         // Analyze the bean to build the methodMap
         BeanInfo beanInfo = Introspector.getBeanInfo(entity.getClass());
         for (PropertyDescriptor propDes : beanInfo.getPropertyDescriptors()) {
-            writeMethodMap.put(propDes.getName(), propDes.getWriteMethod());
+            
+            if ((propDes != null) && (propDes.getWriteMethod() != null) && (propDes.getWriteMethod().getName() != null)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(String.format("Store property and method: %s, %s", propDes.getName(), propDes.getWriteMethod().getName()));
+                }
+                writeMethodMap.put(propDes.getName(), propDes.getWriteMethod());
+            } else {
+                LOG.warn(String.format("Store property and method: %s, %s", propDes.getName(), propDes.getWriteMethod()));
+            }
         }
 
         return writeMethodMap;
@@ -67,7 +75,7 @@ public class BeanUtil {
         return readMethodMap;
     }
 
-    public static Object updateProperty(Object obj, String property, String value) {
+    public static Object updateProperty(Object obj, String property, String value) throws Exception {
         try {
             String setMethodName = "set" + (property.substring(0, 1).toUpperCase()) + property.substring(1);
             
@@ -82,6 +90,7 @@ public class BeanUtil {
 
         } catch (Exception ex) {
             LOG.warn("Dynamic invoke setter for '" + property + "'", ex);
+            throw ex;
         }
 
         return obj;
@@ -230,11 +239,13 @@ public class BeanUtil {
         
         Object strValue = null;
         Object objvalue;
-        String dateFormat;
+        String dateFormat;  // for date format
+        String subName;     // for property of bean within the bean.
         
         if (data == null) {
             listData = null;
         } else {
+            if (LOG.isDebugEnabled()) LOG.debug("getDataList. headers=" + headers);
             // Lookup member data of the object from the header
             int idxMemberData;
             
@@ -282,6 +293,7 @@ public class BeanUtil {
                         idxHeader = 0;
                         for (String header : headers) {
                             dateFormat = null;
+                            subName = null;
                             // Check hear is json or not
                             if (header.startsWith("{")) {
                                 // Parse json
@@ -289,6 +301,9 @@ public class BeanUtil {
                                 Map<String, Object> jsonMap = jsonParser.parseMap(header);
                                 header = (String) jsonMap.get("name");
                                 dateFormat = (String) jsonMap.get("format");
+                                subName = (String) jsonMap.get("subName");
+      
+                                if (LOG.isDebugEnabled()) { LOG.debug(String.format("Parse json name, format: '%s', '%s'.", header, dateFormat)); }
                             }
 
                             // Lookup header from map table
@@ -303,7 +318,7 @@ public class BeanUtil {
                                 strValue = rowInputObj[idxHeader];
                                 
                                 // Determine type of argument of the setter method
-                                objvalue = convertDataType(header, setMethod, strValue, dateFormat);
+                                objvalue = convertDataType(header, setMethod, strValue, dateFormat, subName);
                                 //
                                 
                                 LOG.debug("value=" + objvalue);
@@ -356,9 +371,10 @@ public class BeanUtil {
      * @param setMethod method with only 1 parameter. Ex setId(int id).
      * @param value generic object
      * @param format for Date data
+     * @param subPropertyName for property of sub bean
      * @return specified object matches with type of the parameter of the method.
      */
-    private static Object convertDataType(String propertyName, Method setMethod, Object value, String format) {
+    private static Object convertDataType(String propertyName, Method setMethod, Object value, String format, String subPropertyName) {
         
         if (LOG.isDebugEnabled()) {
             LOG.debug("convertDataType:setMethod=" + setMethod.getName() + ";value=" + value);
@@ -408,7 +424,12 @@ public class BeanUtil {
                     // Create new instance of param
                     
                     Object instanceValue = Class.forName(typeName).newInstance();
-                    instanceValue = BeanUtil.updateProperty(instanceValue, propertyName, value.toString());
+                    if (subPropertyName != null) {
+                        // Call method setter for given subName
+                        instanceValue = BeanUtil.updateProperty(instanceValue, subPropertyName, value.toString());
+                    } else {
+                        instanceValue = BeanUtil.updateProperty(instanceValue, propertyName, value.toString());
+                    }
 
                     return instanceValue;
                 }
