@@ -19,15 +19,14 @@ import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 /**
  * This class provide data access logic
  */
 public class DaoService {
     /** For logging. */
-    private final static Logger LOG = LoggerFactory.getLogger(DaoService.class);
+    private final static Logger LOG = Logger.getLogger(DaoService.class);
     
     /** String pattern of column name in the query template. It is ${column-name} */
     private static final String COLUMN_NAME_PATTERN = "[\\x24][\\{]([a-zA-Z0-9_]+)[\\}]";

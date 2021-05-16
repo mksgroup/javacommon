@@ -9,19 +9,20 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.json.BasicJsonParser;
-import org.springframework.boot.json.JsonParser;
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 public class BeanUtil {
-    final static Logger LOG = LoggerFactory.getLogger(BeanUtil.class);
+    final static Logger LOG = Logger.getLogger(BeanUtil.class);
 
     /**
      * @param entity
@@ -140,7 +141,11 @@ public class BeanUtil {
                 }
                 setMethod = instanceObj.getClass().getMethod(setMethodName, Double.class);
                 setMethod.invoke(instanceObj, actObj);
-            } else {
+            } else if (Boolean.class.getName().equals(dataType)) {
+            	actObj = (Boolean) objValue;
+                setMethod = instanceObj.getClass().getMethod(setMethodName, Boolean.class);
+                setMethod.invoke(instanceObj, actObj);
+        	} else {
                 throw new RuntimeException("Unsupport data type of value: " + objValue.getClass());
             }
         } catch (Exception e) {
@@ -150,13 +155,27 @@ public class BeanUtil {
     }
     
     public static Object readProperty(Object obj, String property) {
+        String getMethodName;
+        Method getMethod;
+        String firstUpProperty = (property.substring(0, 1).toUpperCase()) + property.substring(1);
+
         try {
-            String getMethodName = "get" + (property.substring(0, 1).toUpperCase()) + property.substring(1);
-            Method getMethod = obj.getClass().getMethod(getMethodName);
+            getMethodName = "get" + firstUpProperty;
+            getMethod = obj.getClass().getMethod(getMethodName);
             return getMethod.invoke(obj);
 
         } catch (Exception ex) {
-            LOG.warn("Dynamic invoke setter for '" + property, ex);
+            LOG.warn("Dynamic invoke setter for '" + property + ". Try to call method is" + firstUpProperty + "...");
+            // Try to get property of boolean
+            // For boolean property, geter is "is..."
+            getMethodName = "is" + firstUpProperty;
+            try {
+                getMethod = obj.getClass().getMethod(getMethodName);
+                return getMethod.invoke(obj);
+            } catch (Exception ex2) {
+                LOG.warn("Dynamic invoke setter for '" + property, ex2);
+            }
+            
         }
 
         return null;
@@ -297,12 +316,19 @@ public class BeanUtil {
                             // Check hear is json or not
                             if (header.startsWith("{")) {
                                 // Parse json
-                                JsonParser jsonParser = new BasicJsonParser();
-                                Map<String, Object> jsonMap = jsonParser.parseMap(header);
-                                header = (String) jsonMap.get("name");
-                                dateFormat = (String) jsonMap.get("format");
-                                subName = (String) jsonMap.get("subName");
+//                                JsonParser jsonParser = new BasicJsonParser();
+//                                Map<String, Object> jsonMap = jsonParser.parseMap(header);
+//                                header = (String) jsonMap.get("name");
+//                                dateFormat = (String) jsonMap.get("format");
+//                                subName = (String) jsonMap.get("subName");
       
+                                  ObjectMapper objectMapper = new ObjectMapper();
+                                  Map<String,String> jsonMap = new HashMap<String, String>();
+
+                                  jsonMap = objectMapper.readValue(header, HashMap.class);
+                                  header = (String) jsonMap.get("name");
+                                  dateFormat = (String) jsonMap.get("format");
+                                  subName = (String) jsonMap.get("subName");
                                 if (LOG.isDebugEnabled()) { LOG.debug(String.format("Parse json name, format: '%s', '%s'.", header, dateFormat)); }
                             }
 
@@ -319,11 +345,17 @@ public class BeanUtil {
                                 
                                 // Determine type of argument of the setter method
                                 objvalue = convertDataType(header, setMethod, strValue, dateFormat, subName);
-                                //
                                 
                                 LOG.debug("value=" + objvalue);
                                 try {
-                                    setMethod.invoke(rowOutputData, objvalue);
+                                	if(objvalue != null) {
+                                       	LOG.info("Type of objvalue: " + objvalue.getClass().getTypeName());
+                                		if(objvalue.getClass() == byte[].class) {
+	                                		setMethod.invoke(rowOutputData, (byte[]) objvalue);
+	                                	} else {
+	                                		setMethod.invoke(rowOutputData, objvalue);
+	                                	}
+                                	}
                                 } catch (IllegalArgumentException iaEx) {
                                     LOG.warn("Could not call method " + setMethod.getName() + " for " + objvalue, iaEx);
                                 }
@@ -412,6 +444,24 @@ public class BeanUtil {
                     return (value != null && !value.toString().isEmpty()) ? Double.valueOf(value.toString()) : null;
                 } else if (String.class.getName().equals(typeName)) {
                     return value.toString();
+                } else if (Boolean.class.getName().equals(typeName)){
+                	return (value != null && !value.toString().isEmpty()) ? Boolean.valueOf(value.toString()) : null;
+                } else if ("byte[]".equals(typeName)) {
+                	if (value instanceof String) {
+                		
+                		// Convert from base64 of image to byte[]
+                		if (((String) value).startsWith("data:image/") ) {
+                			String checkBase64 = ((String) value).substring(((String) value).indexOf(";") + 1, ((String) value).indexOf(","));
+                			if(checkBase64.equals("base64")) {
+                				String base64data = ((String) value).split(",")[1];
+	                			byte[] byteData = Base64.getDecoder().decode(((String) base64data).getBytes());
+	                			return byteData;
+                			}
+                		}
+                		return ((String) value).getBytes();
+                	} else {
+                		return value;
+                	}
                 } else if (Date.class.getName().equals(typeName)) {
                     // Date data
                     

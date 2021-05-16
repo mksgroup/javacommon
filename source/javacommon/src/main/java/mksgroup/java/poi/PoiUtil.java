@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.Date;
 
+import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRichTextString;
 import org.apache.poi.hssf.usermodel.HSSFRow;
@@ -25,8 +26,6 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import mksgroup.java.common.CommonUtil;
 import mksgroup.java.common.Constant;
@@ -37,7 +36,7 @@ import mksgroup.java.common.Constant;
  */
 public class PoiUtil {
     /** For logging. */
-    private final static Logger LOG = LoggerFactory.getLogger(PoiUtil.class);
+    private final static Logger LOG = Logger.getLogger(PoiUtil.class);
 
     /**
      * [Give the description for method].
@@ -449,20 +448,31 @@ public class PoiUtil {
         return setContent(row, colIdx, value);
     }
 
-    @Deprecated
-    public static Object getValue(HSSFSheet sheet, int rowIdx, short colIdx) {
-        HSSFRow row = sheet.getRow(rowIdx);
-        Object retValue;
-        if (row == null) {
-            row = sheet.createRow(rowIdx);
-        }
+//    @Deprecated
+//    public static Object getValue(HSSFSheet sheet, int rowIdx, short colIdx) {
+//        HSSFRow row = sheet.getRow(rowIdx);
+//
+//        if (row == null) {
+//            row = sheet.createRow(rowIdx);
+//        }
+//
+//        return getValue(row, colIdx);
+//    }
+//
+//    @Deprecated
+//    public static Object getValue(HSSFSheet sheet, int rowIdx, int colIdx) {
+//        HSSFRow row = sheet.getRow(rowIdx);
+//
+//        if (row == null) {
+//            row = sheet.createRow(rowIdx);
+//        }
+//
+//        return getValue(row, colIdx);
+//    }
 
-        return getValue(row, colIdx);
-    }
+    public static Object getValue(Sheet sheet, int rowIdx, int colIdx) {
+        Row row = sheet.getRow(rowIdx);
 
-    public static Object getValue(HSSFSheet sheet, int rowIdx, int colIdx) {
-        HSSFRow row = sheet.getRow(rowIdx);
-        Object retValue;
         if (row == null) {
             row = sheet.createRow(rowIdx);
         }
@@ -516,7 +526,6 @@ public class PoiUtil {
      * @return
      */
     public static Object getValue(Row row, int colIdx) {
-        Object retValue = null;
         Cell cell = row.getCell(colIdx);
 
         return getValue(cell);
@@ -548,7 +557,7 @@ public class PoiUtil {
 
         if (cell != null) {
             switch (cell.getCellType()) {
-                case Cell.CELL_TYPE_FORMULA :
+                case FORMULA :
                     // Try to get double value
                     try {
                         retValue = cell.getNumericCellValue();
@@ -565,17 +574,17 @@ public class PoiUtil {
                         retValue = cell.getRichStringCellValue().toString();
                     }
                     break;
-                case Cell.CELL_TYPE_NUMERIC :
+                case NUMERIC :
                     retValue = cell.getNumericCellValue();
                     break;
-                case Cell.CELL_TYPE_STRING :
+                case STRING :
                     retValue = cell.getRichStringCellValue().toString();
                     break;
-                case Cell.CELL_TYPE_BOOLEAN :
+                case BOOLEAN :
                     retValue = cell.getBooleanCellValue();
                     break;
 
-                case Cell.CELL_TYPE_ERROR :
+                case ERROR :
                     LOG.debug("Error (" + cell.getRowIndex() + "," + cell.getColumnIndex() + ")"
                             + cell.getErrorCellValue());
                     retValue = "#N/A";
@@ -649,7 +658,9 @@ public class PoiUtil {
             fileOut = new FileOutputStream(filename);
             wb.write(fileOut);
         } finally {
-            fileOut.close();
+            if (fileOut != null) {
+                fileOut.close();
+            }
         }
     }
 }

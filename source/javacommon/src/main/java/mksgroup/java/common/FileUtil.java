@@ -18,6 +18,8 @@
  */
 package mksgroup.java.common;
 
+import static mksgroup.java.common.CommonUtil.isNNandNB;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,15 +33,13 @@ import java.io.Writer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.log4j.Logger;
 import org.mozilla.universalchardet.UniversalDetector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * @author thachle
  */
 public class FileUtil {
-    private final static Logger LOG = LoggerFactory.getLogger(FileUtil.class);
+    private final static Logger LOG = Logger.getLogger(FileUtil.class);
 
     /**
      * [Give the description for method].
@@ -50,7 +50,7 @@ public class FileUtil {
      */
     public static String getEncode(String filePath) throws IOException {
         byte[] buf = new byte[4096];
-        FileInputStream fis = new FileInputStream(filePath);
+        InputStream fis = new FileInputStream(filePath);
 
         // (1)
         UniversalDetector detector = new UniversalDetector(null);
@@ -93,8 +93,8 @@ public class FileUtil {
             while ((len = buffReader.read(buff)) != -1) {
                 sb.append(buff, 0, len);
             }
-        } catch (Exception e) {
-            // e.printStackTrace();
+        } catch (Exception ex) {
+            LOG.error("Error in reading content of resourse: " + resourcePath, ex);
         } finally {
             if (buffReader != null) {
                 buffReader.close();
@@ -277,16 +277,121 @@ public class FileUtil {
         return resultPath;
     }
 
-    public static void saveFile(String pathFile, String Content) {
+    /**
+     * Create directory including parent folders.
+     * @param path
+     * @return Null if the path is existed.
+     * True if created folder successfully.
+     */
+    public static Boolean mkdir(String path) {
+        File filePath = new File(path);
+        
+        if (filePath.isDirectory() && filePath.exists()) {
+            return null;
+        } else {
+            return filePath.mkdirs();
+        }
+    }
+
+    /**
+     * Get extension of file.
+     * @param fileName
+     * @return extension part without dot character
+     */
+    public static String getExtension(String fileName) {
+        if (!isNNandNB(fileName)) {
+            return fileName;
+        }
+
+        int idxOfDot = fileName.lastIndexOf(Constant.CHAR_DOT);
+        if (idxOfDot == -1) {
+            return null;
+        } else {
+            return fileName.substring(idxOfDot + 1);
+        }
+    }
+
+    /**
+     * Get file name from path. Ex: Input C:/folder/file.txt => Filename: file.txt Input C:\folder\file.txt => Filename:
+     * file.txt Input /folder/file.txt => Filename: file.txt
+     * @param filePath
+     * @return file name includes extension
+     */
+    public static String getFilename(String filePath) {
+        if ((filePath == null) || (filePath.isEmpty())) {
+            return filePath;
+        }
+
+        int idx = filePath.lastIndexOf(Constant.STR_RIGHTSLASH);
+
+        if (idx > -1) { // Has separator /
+            return filePath.substring(idx + 1);
+        } else {
+            idx = filePath.lastIndexOf(Constant.STR_BACKSLASH);
+
+            if (idx > -1) { // Has separator \
+                return filePath.substring(idx + 1);
+            } else {
+                return filePath;
+            }
+        }
+    }
+    
+    /**
+     * Get folder path from the full file path.
+     * @param filePath full file path. Ex: C:/A/B/C/abc.txt
+     * @return Folder path without the separator at the end. Ex: C:/A/B/C
+     */
+    public static String getFolder(String filePath) {
+        if ((filePath == null) || (filePath.isEmpty())) {
+            return filePath;
+        }
+
+        int idx = filePath.lastIndexOf("/");
+
+        if (idx > -1) { // Has separator /
+            return filePath.substring(0, idx);
+        } else {
+            idx = filePath.lastIndexOf("\\");
+
+            if (idx > -1) { // Has separator \
+                return filePath.substring(0, idx);
+            } else {
+                return filePath;
+            }
+        }
+    }
+
+    /**
+     * Delete folder.
+     * @param dir to be deleted folder.
+     * @param isDeleteOwn true to delete the
+     * @return
+     */
+    public static boolean deleteDir(File dir, boolean isDeleteOwn) {
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]), true);
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        // The directory is now empty so delete it
+        if (isDeleteOwn) {
+            return dir.delete();
+        }
+        return true;
+    }
+
+    public static void saveFile(String pathFile, String Content) throws IOException {
         Writer output = null;
         File file = new File(pathFile);
-        try {
-            output = new BufferedWriter(new FileWriter(file));
-            output.write(Content);
-            output.close();
-        } catch (IOException ex) {
-            LOG.error("Could not save file '" + pathFile + "'", ex);
-        }
+
+        output = new BufferedWriter(new FileWriter(file));
+        output.write(Content);
+        output.close();
     }
 
     public static void close(InputStream is) {

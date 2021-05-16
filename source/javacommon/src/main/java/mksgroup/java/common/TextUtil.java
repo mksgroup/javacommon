@@ -18,8 +18,7 @@
  */
 package mksgroup.java.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 /**
  * @author thachle
@@ -27,7 +26,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TextUtil {
     /** For logging. */
-    private final static Logger LOG = LoggerFactory.getLogger(TextUtil.class);
+    private final static Logger LOG = Logger.getLogger(TextUtil.class);
 
     /**
      * Check subTest is around by startCh and endCd in text.

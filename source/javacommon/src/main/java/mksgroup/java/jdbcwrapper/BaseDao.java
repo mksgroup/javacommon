@@ -17,13 +17,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 public class BaseDao {
     
     /** For logging. */
-    private final static Logger LOG = LoggerFactory.getLogger(BaseDao.class);
+    private final static Logger LOG = Logger.getLogger(BaseDao.class);
 
     Map<String, Method> writeMethodMap = null;
     Map<String, Method> readMethodMap = null;
@@ -125,11 +124,11 @@ public class BaseDao {
                     LOG.warn("Could not found column name '" + colName + "");
                 }
             } catch (IllegalArgumentException e) {
-                LOG.error("", this.getClass(), e);
+                LOG.error("Could not parse data.", e);
             } catch (IllegalAccessException e) {
-                LOG.error("", this.getClass(), e);
+                LOG.error("Could not parse data.", e);
             } catch (InvocationTargetException e) {
-                LOG.error("", this.getClass(), e);
+                LOG.error("Could not parse data.", e);
             }
             
         }
@@ -150,7 +149,7 @@ public class BaseDao {
                 writeMethodMap.put(propDes.getName(), propDes.getWriteMethod());
             }
         } catch (IntrospectionException iex) {
-            LOG.error("", this, iex);
+            LOG.error("Could not get write method.", iex);
         }
         return writeMethodMap;
     }

@@ -24,15 +24,14 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 /**
  * @author thachln
  *
  */
 public class Cache {
-    static final private Logger LOG = LoggerFactory.getLogger(Cache.class);
+    static final private Logger LOG = Logger.getLogger(Cache.class);
     
     /** Current folder is as default . */
     private static String cacheFilePath = "CacheFile.xml";

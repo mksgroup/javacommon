@@ -8,6 +8,12 @@ INTRODUCTION:
 This document contains the release notes for the Rocky Common library.
 Rocky Common is a set of utility functions and reusable components that should be of use in any Java environment.
 
+*** Version 0.4.8
+- Fix bugs of BeanUtil: In case property "boolean" or "Boolean", the getter method is "isAbc".
+
+*** Version 0.4.7
+- Add Node model for JSTree (https://www.jstree.com/)
+
 *** Version 0.3.1
 - Add entity "Result" to present the result of ajax submit.
 - Add utility to unzip file.

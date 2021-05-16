@@ -23,8 +23,7 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 /**
  * @author ThachLN
@@ -32,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class CommonUtil {
     
     /** For logging. */
-    private final static Logger LOG = LoggerFactory.getLogger(CommonUtil.class);
+    private final static Logger LOG = Logger.getLogger(CommonUtil.class);
     
     /** String pattern of format string. */
     public static final String VARIABLE_NAME_PATTERN = "[\\x24][\\{]([a-zA-Z0-9_.]+)[\\}]";
@@ -170,6 +169,7 @@ public class CommonUtil {
         return targetCal.getTime();
     }
 
+    @Deprecated
     public static boolean mkdir(String path) {
         return new File(path).mkdir();
     }
@@ -179,6 +179,7 @@ public class CommonUtil {
      * @param fileName
      * @return extension part without dot character
      */
+    @Deprecated
     public static String getExtension(String fileName) {
         if (!isNNandNB(fileName)) {
             return fileName;
@@ -198,6 +199,7 @@ public class CommonUtil {
      * @param filePath
      * @return file name includes extension
      */
+    @Deprecated
     public static String getFilename(String filePath) {
         if ((filePath == null) || (filePath.isEmpty())) {
             return filePath;
@@ -218,6 +220,7 @@ public class CommonUtil {
         }
     }
 
+    @Deprecated
     public static boolean deleteDir(File dir, boolean isDeleteOwn) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
@@ -354,8 +357,7 @@ public class CommonUtil {
         if (resourcePath.startsWith("//")) { // Root path in Linux
             String path = resourcePath.substring(1);
             return new FileInputStream(path);
-        } if (resourcePath.startsWith("/")) { // The resource file is in the
-                                            // CLASSPATH
+        } if (resourcePath.startsWith("/")) { // The resource file is in the // CLASSPATH
             return (CommonUtil.class.getResourceAsStream(resourcePath));
         } else { // The resource file is the input file
             return new FileInputStream(resourcePath);

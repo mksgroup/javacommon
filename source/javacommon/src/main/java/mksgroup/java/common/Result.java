@@ -36,12 +36,54 @@ public class Result {
     /** Not Success . */
     final public static String FAIL = "FAIL";
     
+    final public static Result RESULT_OK = new Result(0, OK, "Success");
+    final public static Result RESULT_FAIL = new Result(1, FAIL, "Error");
+    
+    /** Error code. 0: No error. */
+    private int cd = 0;
+    
     /** Result: OK | FAIL . */
     private String status;
     
     /** Result message . */
     private String message;
     
+    /**
+     * Constructor with default error code = 0;
+     * @param status
+     * @param message
+     */
+    public Result(String status, String message) {
+        super();
+        this.status = status;
+        this.message = message;
+    }
+
+    /**
+     * @param cd
+     * @param status
+     * @param message
+     */
+    public Result(int cd, String status, String message) {
+        this.cd = cd;
+        this.status = status;
+        this.message = message;
+    }
+
+    /**
+    * Get value of cd.
+    * @return the cd
+    */
+    public int getCd() {
+        return cd;
+    }
+    /**
+     * Set the value for cd.
+     * @param cd the cd to set
+     */
+    public void setCd(int cd) {
+        this.cd = cd;
+    }
     /**
      * Get value of status.
      * @return the status

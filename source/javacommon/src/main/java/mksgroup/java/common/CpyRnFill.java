@@ -22,8 +22,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 /**
  * The CpyRnFil - Copy Rename and Fill utility.
@@ -32,7 +31,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CpyRnFill {
     /** For logging. */
-    private final static Logger LOG = LoggerFactory.getLogger(CpyRnFill.class);
+    private final static Logger LOG = Logger.getLogger(CpyRnFill.class);
 
     /**
      * @param args
