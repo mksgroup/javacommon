@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>mksgroup.java</groupId>
   <artifactId>javacommon</artifactId>
-  <version>0.6.0</version>
+  <version>0.7.0</version>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
@@ -13,7 +13,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<poi.version>4.0.1</poi.version>
+		<poi.version>4.1.2</poi.version>
 		<java.version>1.8</java.version>
 <!-- 		<junit-jupiter.version>5.2.0</junit-jupiter.version> -->
 	</properties>
@@ -86,7 +86,7 @@
         <dependency>
             <groupId>org.apache.xmlbeans</groupId>
             <artifactId>xmlbeans</artifactId>
-            <version>2.3.0</version>
+            <version>3.1.0</version>
         </dependency>
 
         <dependency>
@@ -113,6 +113,14 @@
 		    <scope>test</scope>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+		<dependency>
+		    <groupId>org.junit.jupiter</groupId>
+		    <artifactId>junit-jupiter-api</artifactId>
+		    <version>5.7.1</version>
+		    <scope>test</scope>
+		</dependency>
+
 <!-- 		<dependency> -->
 <!-- 			<groupId>org.springframework.boot</groupId> -->
 <!-- 			<artifactId>spring-boot-starter-test</artifactId> -->
@@ -121,10 +129,12 @@
 <!-- 		<dependency> -->
 <!-- 			<groupId>org.junit.jupiter</groupId> -->
 <!-- 			<artifactId>junit-jupiter-api</artifactId> -->
+<!-- 			<scope>test</scope> -->
 <!-- 		</dependency> -->
 <!-- 		<dependency> -->
 <!-- 			<groupId>org.junit.jupiter</groupId> -->
 <!-- 			<artifactId>junit-jupiter-engine</artifactId> -->
+<!-- 			<scope>test</scope> -->
 <!-- 		</dependency> -->
 <!-- 		<dependency> -->
 <!-- 			<groupId>org.junit.platform</groupId> -->
